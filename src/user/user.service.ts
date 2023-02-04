@@ -5,6 +5,8 @@ import {
   UserInterface,
   userDTOKeys,
   UpdatePasswordDto,
+  passwordDTOKeys,
+  UserResponseInterface,
 } from './user.interface';
 import {
   validateUUID,
@@ -15,54 +17,76 @@ import {
 
 @Injectable()
 export class UserService {
-  private users = [
-    { login: 'Roma', password: 'Password123' },
-    { login: 'Yaroslav', password: 'Password456' },
-  ].map((user: CreateUserDTOInterface) => new User(user));
+  private users = [];
 
   getUsers(): UserInterface[] {
-    return this.users;
+    const users = this.users.map((user) => {
+      const { password, ...userRes } = user;
+      return userRes;
+    });
+
+    return users;
   }
 
-  getUserById(id: string): UserInterface {
-    validateUUID(id);
-    const user = this.users.find((user) => user.id === id);
-    if (!user) throwError404('User not found');
-    return user;
+  getUserById(id: string): UserResponseInterface {
+    const user = getFullUserById(id, this.users);
+
+    const { password, ...responseUser } = user;
+    return responseUser;
   }
 
-  createUser(userDTO: CreateUserDTOInterface): UserInterface {
+  createUser(userDTO: CreateUserDTOInterface): UserResponseInterface {
     checkUserDTO<CreateUserDTOInterface>(userDTO);
     const user = new User(userDTO);
     this.users.push(user);
-    return user;
+    const { password, ...responseUser } = user;
+    return responseUser;
   }
 
-  updateUserPassword(passwordDto: UpdatePasswordDto, id: string) {
-    const currentUser = this.getUserById(id);
+  updateUserPassword(
+    passwordDto: UpdatePasswordDto,
+    id: string,
+  ): UserResponseInterface {
+    checkPasswordDTO<UpdatePasswordDto>(passwordDto);
+    const currentUser = getFullUserById(id, this.users);
 
     if (currentUser.password === passwordDto.oldPassword) {
       currentUser.password = passwordDto.newPassword;
       currentUser.updatedAt = new Date().getTime();
-      return currentUser;
+      currentUser.version += 1;
+      const { password, ...responseUser } = currentUser;
+      return responseUser;
     }
 
     throwError403('Old password is wrong');
   }
 
-  removeUser(id: string): UserInterface {
-    const currentUser = this.getUserById(id);
+  removeUser(id: string): void {
+    const currentUser = getFullUserById(id, this.users);
     const index = this.users.findIndex((user) => user.id === currentUser.id);
     this.users.splice(index, 1);
-
-    return currentUser;
   }
 }
 
 function checkUserDTO<T>(userDTO: T): void {
   for (const key of userDTOKeys) {
     if (!userDTO[key]) {
-      throwError400('User required fields are login and password');
+      throwError400('User required fields are missing');
     }
   }
+}
+
+function checkPasswordDTO<T>(passwordDTO: T): void {
+  for (const key of passwordDTOKeys) {
+    if (!passwordDTO[key]) {
+      throwError400('Password required fields are missing');
+    }
+  }
+}
+
+function getFullUserById(id: string, users: UserInterface[]): UserInterface {
+  validateUUID(id);
+  const user = users.find((user) => user.id === id);
+  if (!user) throwError404('User not found');
+  return user;
 }

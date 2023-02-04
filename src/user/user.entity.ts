@@ -13,8 +13,8 @@ export class User implements UserInterface {
     this.id = v4();
     this.login = user.login;
     this.password = user.password;
-    this.version = null;
+    this.version = 1;
     this.createdAt = new Date().getTime();
-    this.updatedAt = null;
+    this.updatedAt = this.createdAt;
   }
 }

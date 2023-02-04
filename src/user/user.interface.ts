@@ -10,6 +10,14 @@ export interface UserInterface extends CreateUserDTOInterface {
   updatedAt: number; // timestamp of last update
 }
 
+export interface UserResponseInterface {
+  id: string;
+  version: number;
+  createdAt: number;
+  updatedAt: number;
+  login: string;
+}
+
 export const userDTOKeys: (keyof CreateUserDTOInterface)[] = [
   'login',
   'password',
@@ -19,3 +27,8 @@ export interface UpdatePasswordDto {
   oldPassword: string; // previous password
   newPassword: string; // new password
 }
+
+export const passwordDTOKeys: (keyof UpdatePasswordDto)[] = [
+  'newPassword',
+  'oldPassword',
+];

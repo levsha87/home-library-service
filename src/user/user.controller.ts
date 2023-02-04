@@ -13,6 +13,7 @@ import {
   UserInterface,
   CreateUserDTOInterface,
   UpdatePasswordDto,
+  UserResponseInterface,
 } from './user.interface';
 
 @Controller('user')
@@ -27,13 +28,13 @@ export class UserController {
 
   @Get(':id')
   @HttpCode(200)
-  getUser(@Param('id') id: string): UserInterface {
+  getUser(@Param('id') id: string): UserResponseInterface {
     return this.userService.getUserById(id);
   }
 
   @Post()
   @HttpCode(201)
-  createUser(@Body() user: CreateUserDTOInterface): UserInterface {
+  createUser(@Body() user: CreateUserDTOInterface): UserResponseInterface {
     return this.userService.createUser(user);
   }
 
