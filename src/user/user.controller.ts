@@ -1,6 +1,19 @@
-import { Body, Controller, Get, Post, Param, HttpCode } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Put,
+  Delete,
+  Param,
+  HttpCode,
+} from '@nestjs/common';
 import { UserService } from './user.service';
-import { UserInterface, UserDTOInterface } from './user.interface';
+import {
+  UserInterface,
+  CreateUserDTOInterface,
+  UpdatePasswordDto,
+} from './user.interface';
 
 @Controller('user')
 export class UserController {
@@ -20,7 +33,22 @@ export class UserController {
 
   @Post()
   @HttpCode(201)
-  createUser(@Body('user') user: UserDTOInterface): UserInterface {
+  createUser(@Body() user: CreateUserDTOInterface): UserInterface {
     return this.userService.createUser(user);
+  }
+
+  @Put(':id')
+  @HttpCode(200)
+  updateUserPassword(
+    @Param('id') id: string,
+    @Body() passwordDto: UpdatePasswordDto,
+  ) {
+    return this.userService.updateUserPassword(passwordDto, id);
+  }
+
+  @Delete(':id')
+  @HttpCode(204)
+  removeUser(@Param('id') id: string) {
+    return this.userService.removeUser(id);
   }
 }

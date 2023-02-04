@@ -1,4 +1,4 @@
-import { UserInterface, UserDTOInterface } from './user.interface';
+import { UserInterface, CreateUserDTOInterface } from './user.interface';
 import { v4 } from 'uuid';
 
 export class User implements UserInterface {
@@ -9,7 +9,7 @@ export class User implements UserInterface {
   createdAt: number;
   updatedAt: number;
 
-  constructor(user: UserDTOInterface) {
+  constructor(user: CreateUserDTOInterface) {
     this.id = v4();
     this.login = user.login;
     this.password = user.password;
