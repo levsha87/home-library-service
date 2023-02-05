@@ -18,17 +18,7 @@ export interface UserResponseInterface {
   login: string;
 }
 
-export const userDTOKeys: (keyof CreateUserDTOInterface)[] = [
-  'login',
-  'password',
-];
-
-export interface UpdatePasswordDto {
+export interface UpdatePasswordDtoInterface {
   oldPassword: string; // previous password
   newPassword: string; // new password
 }
-
-export const passwordDTOKeys: (keyof UpdatePasswordDto)[] = [
-  'newPassword',
-  'oldPassword',
-];

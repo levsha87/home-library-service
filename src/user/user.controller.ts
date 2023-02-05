@@ -7,14 +7,13 @@ import {
   Delete,
   Param,
   HttpCode,
+  UsePipes,
+  ValidationPipe,
 } from '@nestjs/common';
 import { UserService } from './user.service';
-import {
-  UserInterface,
-  CreateUserDTOInterface,
-  UpdatePasswordDto,
-  UserResponseInterface,
-} from './user.interface';
+import { UserInterface, UserResponseInterface } from './user.interface';
+
+import { CreateUserDTO, UpdateUserPasswordDTO } from './user.dto';
 
 @Controller('user')
 export class UserController {
@@ -34,15 +33,17 @@ export class UserController {
 
   @Post()
   @HttpCode(201)
-  createUser(@Body() user: CreateUserDTOInterface): UserResponseInterface {
+  @UsePipes(ValidationPipe)
+  createUser(@Body() user: CreateUserDTO): UserResponseInterface {
     return this.userService.createUser(user);
   }
 
   @Put(':id')
   @HttpCode(200)
+  @UsePipes(ValidationPipe)
   updateUserPassword(
     @Param('id') id: string,
-    @Body() passwordDto: UpdatePasswordDto,
+    @Body() passwordDto: UpdateUserPasswordDTO,
   ) {
     return this.userService.updateUserPassword(passwordDto, id);
   }

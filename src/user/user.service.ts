@@ -3,17 +3,10 @@ import { User } from './user.entity';
 import {
   CreateUserDTOInterface,
   UserInterface,
-  userDTOKeys,
-  UpdatePasswordDto,
-  passwordDTOKeys,
+  UpdatePasswordDtoInterface,
   UserResponseInterface,
 } from './user.interface';
-import {
-  validateUUID,
-  throwError403,
-  throwError404,
-  throwError400,
-} from '../helpers';
+import { validateUUID, throwError403, throwError404 } from '../helpers';
 
 @Injectable()
 export class UserService {
@@ -36,7 +29,6 @@ export class UserService {
   }
 
   createUser(userDTO: CreateUserDTOInterface): UserResponseInterface {
-    checkUserDTO<CreateUserDTOInterface>(userDTO);
     const user = new User(userDTO);
     this.users.push(user);
     const { password, ...responseUser } = user;
@@ -44,10 +36,9 @@ export class UserService {
   }
 
   updateUserPassword(
-    passwordDto: UpdatePasswordDto,
+    passwordDto: UpdatePasswordDtoInterface,
     id: string,
   ): UserResponseInterface {
-    checkPasswordDTO<UpdatePasswordDto>(passwordDto);
     const currentUser = getFullUserById(id, this.users);
 
     if (currentUser.password === passwordDto.oldPassword) {
@@ -65,22 +56,6 @@ export class UserService {
     const currentUser = getFullUserById(id, this.users);
     const index = this.users.findIndex((user) => user.id === currentUser.id);
     this.users.splice(index, 1);
-  }
-}
-
-function checkUserDTO<T>(userDTO: T): void {
-  for (const key of userDTOKeys) {
-    if (!userDTO[key]) {
-      throwError400('User required fields are missing');
-    }
-  }
-}
-
-function checkPasswordDTO<T>(passwordDTO: T): void {
-  for (const key of passwordDTOKeys) {
-    if (!passwordDTO[key]) {
-      throwError400('Password required fields are missing');
-    }
   }
 }
 
