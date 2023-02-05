@@ -33,7 +33,7 @@ export class ArtistController {
   @Post()
   @HttpCode(201)
   @UsePipes(ValidationPipe)
-  createUser(@Body() artist: CreateArtistDTO): ArtistInterface {
+  createArtist(@Body() artist: CreateArtistDTO): ArtistInterface {
     return this.artistService.createArtist(artist);
   }
 
@@ -49,7 +49,7 @@ export class ArtistController {
 
   @Delete(':id')
   @HttpCode(204)
-  removeUser(@Param('id') id: string) {
+  removeArtist(@Param('id') id: string) {
     return this.artistService.removeArtist(id);
   }
 }

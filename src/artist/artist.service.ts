@@ -33,7 +33,6 @@ export class ArtistService {
     updateArtistDto: UpdateArtistInterface,
     id: string,
   ): ArtistInterface {
-    validateUUID(id);
     const artist = this.getArtistById(id);
     for (let key in updateArtistDto) {
       artist[key] = updateArtistDto[key];
@@ -43,7 +42,6 @@ export class ArtistService {
   }
 
   removeArtist(id: string): void {
-    validateUUID(id);
     const currentArtist = this.getArtistById(id);
     const index = this.artists.findIndex(
       (artist) => artist.id === currentArtist.id,
