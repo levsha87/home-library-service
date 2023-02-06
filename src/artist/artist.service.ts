@@ -4,27 +4,28 @@ import {
   ArtistInterface,
   UpdateArtistInterface,
 } from './artist.interface';
-import { throwError404, validateUUID } from 'src/helpers';
 import { Artist } from './artist.entity';
+import { DbService } from 'src/db/db.service';
+import { throwError404, validateUUID } from 'src/helpers';
 
 @Injectable()
 export class ArtistService {
-  private artists: ArtistInterface[] = [];
+  constructor(private dbService: DbService) {}
 
   getArtists(): ArtistInterface[] {
-    return this.artists;
+    return this.dbService.getArtists();
   }
 
   getArtistById(id: string): ArtistInterface {
     validateUUID(id);
-    const artist = this.artists.find((artist) => artist.id === id);
+    const artist = this.getArtists().find((artist) => artist.id === id);
     if (!artist) throwError404('Artist not found');
     return artist;
   }
 
   createArtist(artistDTO: ArtistDTOInterface): ArtistInterface {
     const artist = new Artist(artistDTO);
-    this.artists.push(artist);
+    this.dbService.addArtist(artist);
 
     return artist;
   }
@@ -34,6 +35,7 @@ export class ArtistService {
     id: string,
   ): ArtistInterface {
     const artist = this.getArtistById(id);
+
     for (let key in updateArtistDto) {
       artist[key] = updateArtistDto[key];
     }
@@ -43,9 +45,10 @@ export class ArtistService {
 
   removeArtist(id: string): void {
     const currentArtist = this.getArtistById(id);
-    const index = this.artists.findIndex(
+    const index = this.getArtists().findIndex(
       (artist) => artist.id === currentArtist.id,
     );
-    this.artists.splice(index, 1);
+
+    this.dbService.removeArtist(index, id);
   }
 }

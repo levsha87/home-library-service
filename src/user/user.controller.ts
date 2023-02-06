@@ -21,7 +21,7 @@ export class UserController {
 
   @Get()
   @HttpCode(200)
-  getUsers(): UserInterface[] {
+  getUsers(): UserResponseInterface[] {
     return this.userService.getUsers();
   }
 

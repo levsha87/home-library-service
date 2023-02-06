@@ -13,7 +13,7 @@ export class CreateArtistDTO implements ArtistDTOInterface {
   @IsString({ message: 'Should be a string type' })
   name: string;
 
-  @IsNotEmpty({ message: 'The user should have a grammy' })
+  @IsNotEmpty({ message: 'The artist should have a grammy' })
   @IsBoolean({ message: 'Should be a boolean type' })
   grammy: boolean;
 }

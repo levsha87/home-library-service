@@ -6,19 +6,19 @@ import {
 } from './album.interface';
 import { throwError404, validateUUID } from 'src/helpers';
 import { Album } from './album.entity';
+import { DbService } from 'src/db/db.service';
 
 @Injectable()
 export class AlbumService {
-  private albums: AlbumInterface[] = [];
-
+  constructor(private dbService: DbService) {}
   getAlbums(): AlbumInterface[] {
-    return this.albums;
+    return this.dbService.getAlbums();
   }
 
   getAlbumById(id: string): AlbumInterface {
     validateUUID(id);
 
-    const currentAlbum = this.albums.find((album) => album.id === id);
+    const currentAlbum = this.getAlbums().find((album) => album.id === id);
     if (!currentAlbum) throwError404('Album not found');
     return currentAlbum;
   }
@@ -26,7 +26,7 @@ export class AlbumService {
   createAlbum(albumDto: AlbumDtoInterface): AlbumInterface {
     const album = new Album(albumDto);
 
-    this.albums.push(album);
+    this.dbService.addAlbum(album);
     return album;
   }
 
@@ -44,9 +44,10 @@ export class AlbumService {
 
   removeAlbum(id: string): void {
     const currentAlbum = this.getAlbumById(id);
-    const index = this.albums.findIndex(
+    const index = this.getAlbums().findIndex(
       (album) => album.id === currentAlbum.id,
     );
-    this.albums.splice(index, 1);
+
+    this.dbService.removeAlbum(index, id);
   }
 }
