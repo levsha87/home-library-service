@@ -18,25 +18,63 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now())
   version   Int      @default(autoincrement())
+
+  @@map("user")
 }
 
 model Track {
-  id       String  @id @default(uuid())
-  name     String
-  artistId String?
-  albumId  String?
-  duration Int
+  id           String            @id @default(uuid())
+  name         String
+  artistId     String?
+  albumId      String?
+  duration     Int
+  track_artist Artist?           @relation(fields: [artistId], references: [id])
+  album        Album?            @relation(fields: [albumId], references: [id])
+  tracks       FavoritesTracks[]
+
+  @@map("tracks")
 }
 
 model Album {
-  id       String @id @default(uuid())
-  name     String
-  year     Int
-  artistId String
+  id           String            @id @default(uuid())
+  name         String
+  year         Int
+  artistId     String?           @unique
+  album_artist Artist?           @relation(fields: [artistId], references: [id])
+  tracks       Track[]
+  albums       FavoritesAlbums[]
+
+  @@map("albums")
 }
 
 model Artist {
-  id     String  @id @default(uuid())
-  name   String
-  grammy Boolean @default(false)
+  id      String             @id @default(uuid())
+  name    String
+  grammy  Boolean            @default(false)
+  albums  Album[]
+  tracks  Track[]
+  artists FavoritesArtists[]
+
+  @@map("artists")
+}
+
+model FavoritesAlbums {
+  albums  Album  @relation(fields: [albumId], references: [id])
+  albumId String
+
+  @@id([albumId])
+}
+
+model FavoritesArtists {
+  artists  Artist @relation(fields: [artistId], references: [id])
+  artistId String
+
+  @@id([artistId])
+}
+
+model FavoritesTracks {
+  tracks  Track  @relation(fields: [trackId], references: [id])
+  trackId String
+
+  @@id([trackId])
 }

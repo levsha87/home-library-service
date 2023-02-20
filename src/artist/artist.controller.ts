@@ -20,36 +20,38 @@ export class ArtistController {
 
   @Get()
   @HttpCode(200)
-  getArtists(): ArtistInterface[] {
-    return this.artistService.getArtists();
+  async getArtists(): Promise<ArtistInterface[]> {
+    return await this.artistService.getArtists();
   }
 
   @Get(':id')
   @HttpCode(200)
-  getArtist(@Param('id') id: string): ArtistInterface {
-    return this.artistService.getArtistById(id);
+  async getArtist(@Param('id') id: string): Promise<ArtistInterface> {
+    return await this.artistService.getArtistById(id);
   }
 
   @Post()
   @HttpCode(201)
   @UsePipes(ValidationPipe)
-  createArtist(@Body() artist: CreateArtistDTO): ArtistInterface {
-    return this.artistService.createArtist(artist);
+  async createArtist(
+    @Body() artist: CreateArtistDTO,
+  ): Promise<ArtistInterface> {
+    return await this.artistService.createArtist(artist);
   }
 
   @Put(':id')
   @HttpCode(200)
   @UsePipes(ValidationPipe)
-  updateArtist(
+  async updateArtist(
     @Param('id') id: string,
     @Body() updateArtistDto: UpdateArtistDTO,
-  ) {
-    return this.artistService.updateArtist(updateArtistDto, id);
+  ): Promise<ArtistInterface> {
+    return await this.artistService.updateArtist(updateArtistDto, id);
   }
 
   @Delete(':id')
   @HttpCode(204)
-  removeArtist(@Param('id') id: string) {
-    return this.artistService.removeArtist(id);
+  async removeArtist(@Param('id') id: string): Promise<void> {
+    return await this.artistService.removeArtist(id);
   }
 }

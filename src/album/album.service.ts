@@ -6,48 +6,65 @@ import {
 } from './album.interface';
 import { throwError404, validateUUID } from 'src/helpers';
 import { Album } from './album.entity';
-import { DbService } from 'src/db/db.service';
+import { PrismaService } from 'src/prisma.service';
 
 @Injectable()
 export class AlbumService {
-  constructor(private dbService: DbService) {}
-  getAlbums(): AlbumInterface[] {
-    return this.dbService.getAlbums();
+  constructor(private prismaService: PrismaService) {}
+  async getAlbums(): Promise<AlbumInterface[]> {
+    return await this.prismaService.album.findMany();
   }
 
-  getAlbumById(id: string): AlbumInterface {
+  async getAlbumById(id: string): Promise<AlbumInterface> {
     validateUUID(id);
 
-    const currentAlbum = this.getAlbums().find((album) => album.id === id);
+    const currentAlbum = await this.prismaService.album.findUnique({
+      where: {
+        id: id,
+      },
+    });
+
     if (!currentAlbum) throwError404('Album not found');
     return currentAlbum;
   }
 
-  createAlbum(albumDto: AlbumDtoInterface): AlbumInterface {
-    const album = new Album(albumDto);
+  async createAlbum(albumDto: AlbumDtoInterface): Promise<AlbumInterface> {
+    const album = await this.prismaService.album.create({
+      data: { ...albumDto },
+    });
 
-    this.dbService.addAlbum(album);
     return album;
   }
 
-  updateAlbum(
+  async updateAlbum(
     updateAlbumDto: UpdateAlbumInterface,
     id: string,
-  ): AlbumInterface {
-    const album = this.getAlbumById(id);
-    for (let key in updateAlbumDto) {
-      album[key] = updateAlbumDto[key];
-    }
+  ): Promise<AlbumInterface> {
+    const album = await this.getAlbumById(id);
 
-    return album;
+    if (album) {
+      const updateAlbum = await this.prismaService.album.update({
+        where: {
+          id: id,
+        },
+        data: {
+          ...updateAlbumDto,
+        },
+      });
+
+      return updateAlbum;
+    }
   }
 
-  removeAlbum(id: string): void {
-    const currentAlbum = this.getAlbumById(id);
-    const index = this.getAlbums().findIndex(
-      (album) => album.id === currentAlbum.id,
-    );
+  async removeAlbum(id: string): Promise<void> {
+    const currentAlbum = await this.getAlbumById(id);
 
-    this.dbService.removeAlbum(index, id);
+    if (currentAlbum) {
+      await this.prismaService.album.delete({
+        where: {
+          id: id,
+        },
+      });
+    }
   }
 }

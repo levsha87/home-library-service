@@ -1,22 +1,63 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { FavoritesRepsonseInterface } from './favs.interface';
-import { DbService } from 'src/db/db.service';
 import { validateUUID } from 'src/helpers';
+import { PrismaService } from 'src/prisma.service';
 
 @Injectable()
 export class FavsService {
-  constructor(private dbService: DbService) {}
+  constructor(private prismaService: PrismaService) {}
 
-  getFavs(): FavoritesRepsonseInterface {
-    return this.dbService.getFavsResponse();
+  async getFavs() {
+    const response = {
+      artists: [],
+      albums: [],
+      tracks: [],
+    };
+
+    const favsArtistsId = await this.prismaService.favoritesArtists.findMany();
+    const allArtists = await this.prismaService.artist.findMany();
+
+    favsArtistsId.forEach((favsArtistId) => {
+      const [uniqueArtist] = allArtists.filter((artist) => {
+        return artist.id === favsArtistId.artistId;
+      });
+
+      if (uniqueArtist) response.artists.push(uniqueArtist);
+    });
+
+    const favsAlbumsId = await this.prismaService.favoritesAlbums.findMany();
+    const allAlbums = await this.prismaService.album.findMany();
+
+    favsAlbumsId.forEach((favsAlbumId) => {
+      const [uniqueAlbum] = allAlbums.filter((album) => {
+        return album.id === favsAlbumId.albumId;
+      });
+
+      if (uniqueAlbum) response.albums.push(uniqueAlbum);
+    });
+
+    const favTracksId = await this.prismaService.favoritesTracks.findMany();
+    const allTracks = await this.prismaService.track.findMany();
+
+    favTracksId.forEach((favTrackId) => {
+      const [uniqueTrack] = allTracks.filter((track) => {
+        return track.id === favTrackId.trackId;
+      });
+
+      if (uniqueTrack) response.tracks.push(uniqueTrack);
+    });
+
+    return response;
   }
 
-  addTrackToFavs(id: string) {
+  async addTrackToFavs(id: string) {
     validateUUID(id);
 
-    const currentTrack = this.dbService
-      .getTracks()
-      .find((track) => track.id === id);
+    const currentTrack = await this.prismaService.track.findUnique({
+      where: {
+        id,
+      },
+    });
 
     if (!currentTrack)
       throw new HttpException(
@@ -24,23 +65,27 @@ export class FavsService {
         HttpStatus.UNPROCESSABLE_ENTITY,
       );
 
-    const isTrackInFavs = this.dbService
-      .getFavsCollection()
-      .tracks.find((trackId) => trackId === id);
+    const isTrackInFavs = await this.prismaService.favoritesTracks
+      .findMany()
+      .then((tracksIds) => tracksIds.find((trackId) => trackId.trackId === id));
 
     if (!isTrackInFavs) {
-      this.dbService.addTrackToFavs(id);
+      return await this.prismaService.favoritesTracks.create({
+        data: { trackId: id },
+      });
     } else {
       return 'Track has already existed in Favs';
     }
   }
 
-  addAlbumToFavs(id: string) {
+  async addAlbumToFavs(id: string) {
     validateUUID(id);
 
-    const currentAlbum = this.dbService
-      .getAlbums()
-      .find((album) => album.id === id);
+    const currentAlbum = await this.prismaService.album.findUnique({
+      where: {
+        id,
+      },
+    });
 
     if (!currentAlbum)
       throw new HttpException(
@@ -48,23 +93,29 @@ export class FavsService {
         HttpStatus.UNPROCESSABLE_ENTITY,
       );
 
-    const isAlbumInFavs = this.dbService
-      .getFavsCollection()
-      .albums.find((albumId) => albumId === id);
+    const isAlbumInFavs = await this.prismaService.favoritesAlbums
+      .findMany()
+      .then((albumsIds) => albumsIds.find((albumId) => albumId.albumId === id));
 
     if (!isAlbumInFavs) {
-      this.dbService.addAlbumToFavs(id);
+      return await this.prismaService.favoritesAlbums.create({
+        data: {
+          albumId: id,
+        },
+      });
     } else {
       return 'Album has already existed in Favs';
     }
   }
 
-  addArtistToFavs(id: string) {
+  async addArtistToFavs(id: string) {
     validateUUID(id);
 
-    const currentArtist = this.dbService
-      .getArtists()
-      .find((artist) => artist.id === id);
+    const currentArtist = await this.prismaService.artist.findUnique({
+      where: {
+        id,
+      },
+    });
 
     if (!currentArtist)
       throw new HttpException(
@@ -72,56 +123,76 @@ export class FavsService {
         HttpStatus.UNPROCESSABLE_ENTITY,
       );
 
-    const isArtistInFavs = this.dbService
-      .getFavsCollection()
-      .artists.find((artistId) => artistId === id);
+    const isArtistInFavs = await this.prismaService.favoritesArtists
+      .findMany()
+      .then((artistsIds) =>
+        artistsIds.find((artistId) => artistId.artistId === id),
+      );
 
     if (!isArtistInFavs) {
-      this.dbService.addArtistToFavs(id);
+      return await this.prismaService.favoritesArtists.create({
+        data: {
+          artistId: id,
+        },
+      });
     } else {
       return 'Artist has already existed in Favs';
     }
   }
 
-  removeTrackFromFavs(id: string) {
+  async removeTrackFromFavs(id: string) {
     validateUUID(id);
 
-    const isTrackInFavs = this.dbService
-      .getFavsCollection()
-      .tracks.find((trackId) => trackId === id);
+    const isTrackInFavs = await this.prismaService.favoritesTracks
+      .findMany()
+      .then((tracksIds) => tracksIds.find((trackId) => trackId.trackId === id));
 
     if (!isTrackInFavs) {
       throw new HttpException('Track is not found', HttpStatus.NOT_FOUND);
     }
 
-    this.dbService.removeTrackFromFavs(id);
+    await this.prismaService.favoritesTracks.delete({
+      where: {
+        trackId: id,
+      },
+    });
   }
 
-  removeAlbumFromFavs(id: string) {
+  async removeAlbumFromFavs(id: string) {
     validateUUID(id);
 
-    const isAlbumInFavs = this.dbService
-      .getFavsCollection()
-      .albums.find((albumId) => albumId === id);
+    const isAlbumInFavs = await this.prismaService.favoritesAlbums
+      .findMany()
+      .then((albumsIds) => albumsIds.find((albumId) => albumId.albumId === id));
 
     if (!isAlbumInFavs) {
       throw new HttpException('Album is not found', HttpStatus.NOT_FOUND);
     }
 
-    this.dbService.removeAlbumFromFavs(id);
+    await this.prismaService.favoritesAlbums.delete({
+      where: {
+        albumId: id,
+      },
+    });
   }
 
-  removeArtistFromFavs(id: string) {
+  async removeArtistFromFavs(id: string) {
     validateUUID(id);
 
-    const isArtistInFavs = this.dbService
-      .getFavsCollection()
-      .artists.find((artistId) => artistId === id);
+    const isArtistInFavs = await this.prismaService.favoritesArtists
+      .findMany()
+      .then((artistsIds) =>
+        artistsIds.find((artistId) => artistId.artistId === id),
+      );
 
     if (!isArtistInFavs) {
       throw new HttpException('Artist is not found', HttpStatus.NOT_FOUND);
     }
 
-    this.dbService.removeArtistFromFavs(id);
+    await this.prismaService.favoritesArtists.delete({
+      where: {
+        artistId: id,
+      },
+    });
   }
 }

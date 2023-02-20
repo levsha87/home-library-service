@@ -20,33 +20,36 @@ export class AlbumController {
 
   @Get()
   @HttpCode(200)
-  getAlbums(): AlbumInterface[] {
-    return this.albumService.getAlbums();
+  async getAlbums(): Promise<AlbumInterface[]> {
+    return await this.albumService.getAlbums();
   }
 
   @Get(':id')
   @HttpCode(200)
-  getAlbumById(@Param('id') id: string): AlbumInterface {
-    return this.albumService.getAlbumById(id);
+  async getAlbumById(@Param('id') id: string): Promise<AlbumInterface> {
+    return await this.albumService.getAlbumById(id);
   }
 
   @Post()
   @HttpCode(201)
   @UsePipes(ValidationPipe)
-  createAlbum(@Body() album: CreateAlbumDto) {
-    return this.albumService.createAlbum(album);
+  async createAlbum(@Body() album: CreateAlbumDto): Promise<AlbumInterface> {
+    return await this.albumService.createAlbum(album);
   }
 
   @Put(':id')
   @HttpCode(200)
   @UsePipes(ValidationPipe)
-  updateAlbum(@Param('id') id: string, @Body() updateAlbumDto: UpdateAlbumDto) {
-    return this.albumService.updateAlbum(updateAlbumDto, id);
+  async updateAlbum(
+    @Param('id') id: string,
+    @Body() updateAlbumDto: UpdateAlbumDto,
+  ): Promise<AlbumInterface> {
+    return await this.albumService.updateAlbum(updateAlbumDto, id);
   }
 
   @Delete(':id')
   @HttpCode(204)
-  removeAlbum(@Param('id') id: string) {
-    return this.albumService.removeAlbum(id);
+  async removeAlbum(@Param('id') id: string): Promise<void> {
+    return await this.albumService.removeAlbum(id);
   }
 }

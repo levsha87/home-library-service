@@ -4,51 +4,67 @@ import {
   ArtistInterface,
   UpdateArtistInterface,
 } from './artist.interface';
-import { Artist } from './artist.entity';
-import { DbService } from 'src/db/db.service';
 import { throwError404, validateUUID } from 'src/helpers';
+import { PrismaService } from 'src/prisma.service';
 
 @Injectable()
 export class ArtistService {
-  constructor(private dbService: DbService) {}
+  constructor(private prismaService: PrismaService) {}
 
-  getArtists(): ArtistInterface[] {
-    return this.dbService.getArtists();
+  async getArtists(): Promise<ArtistInterface[]> {
+    return await this.prismaService.artist.findMany();
   }
 
-  getArtistById(id: string): ArtistInterface {
+  async getArtistById(id: string): Promise<ArtistInterface> {
     validateUUID(id);
-    const artist = this.getArtists().find((artist) => artist.id === id);
+    const artist = await this.prismaService.artist.findUnique({
+      where: {
+        id: id,
+      },
+    });
     if (!artist) throwError404('Artist not found');
     return artist;
   }
 
-  createArtist(artistDTO: ArtistDTOInterface): ArtistInterface {
-    const artist = new Artist(artistDTO);
-    this.dbService.addArtist(artist);
+  async createArtist(artistDTO: ArtistDTOInterface): Promise<ArtistInterface> {
+    const artist = await this.prismaService.artist.create({
+      data: {
+        ...artistDTO,
+      },
+    });
 
     return artist;
   }
 
-  updateArtist(
+  async updateArtist(
     updateArtistDto: UpdateArtistInterface,
     id: string,
-  ): ArtistInterface {
-    const artist = this.getArtistById(id);
+  ): Promise<ArtistInterface> {
+    const artist = await this.getArtistById(id);
 
-    for (let key in updateArtistDto) {
-      artist[key] = updateArtistDto[key];
+    if (artist) {
+      const updateArtist = await this.prismaService.artist.update({
+        where: {
+          id: id,
+        },
+        data: {
+          ...updateArtistDto,
+        },
+      });
+
+      return updateArtist;
     }
-
-    return artist;
   }
 
-  removeArtist(id: string): void {
-    const currentArtist = this.getArtistById(id);
-    const index = this.getArtists().findIndex(
-      (artist) => artist.id === currentArtist.id,
-    );
-
-    this.dbService.removeArtist(index, id);
+  async removeArtist(id: string): Promise<void> {
+    validateUUID(id);
+    const currentArtist = await this.getArtistById(id);
+    if (currentArtist) {
+      await this.prismaService.artist.delete({
+        where: {
+          id: id,
+        },
+      });
+    }
   }
 }
