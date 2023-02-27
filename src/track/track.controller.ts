@@ -20,33 +20,36 @@ export class TrackController {
 
   @Get()
   @HttpCode(200)
-  getTracks(): TrackInterface[] {
-    return this.trackService.getTracks();
+  async getTracks(): Promise<TrackInterface[]> {
+    return await this.trackService.getTracks();
   }
 
   @Get(':id')
   @HttpCode(200)
-  getTrackById(@Param('id') id: string): TrackInterface {
-    return this.trackService.getTrackById(id);
+  async getTrackById(@Param('id') id: string): Promise<TrackInterface> {
+    return await this.trackService.getTrackById(id);
   }
 
   @Post()
   @HttpCode(201)
   @UsePipes(ValidationPipe)
-  createTrack(@Body() track: CreateTrackDto) {
-    return this.trackService.createTrack(track);
+  async createTrack(@Body() track: CreateTrackDto) {
+    return await this.trackService.createTrack(track);
   }
 
   @Put(':id')
   @HttpCode(200)
   @UsePipes(ValidationPipe)
-  updateTrack(@Param('id') id: string, @Body() updateTrackDto: UpdateTrackDto) {
-    return this.trackService.updateTrack(updateTrackDto, id);
+  async updateTrack(
+    @Param('id') id: string,
+    @Body() updateTrackDto: UpdateTrackDto,
+  ) {
+    return await this.trackService.updateTrack(updateTrackDto, id);
   }
 
   @Delete(':id')
   @HttpCode(204)
-  removeTrack(@Param('id') id: string) {
-    return this.trackService.removeTrack(id);
+  async removeTrack(@Param('id') id: string) {
+    return await this.trackService.removeTrack(id);
   }
 }

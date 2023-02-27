@@ -5,50 +5,67 @@ import {
   UpdateTrackInterface,
 } from './track.interface';
 import { throwError404, validateUUID } from 'src/helpers';
-import { Track } from './track.entity';
-import { DbService } from 'src/db/db.service';
+import { PrismaService } from 'src/prisma.service';
 
 @Injectable()
 export class TrackService {
-  constructor(private dbService: DbService) {}
+  constructor(private prismaService: PrismaService) {}
 
-  getTracks(): TrackInterface[] {
-    return this.dbService.getTracks();
+  async getTracks(): Promise<TrackInterface[]> {
+    return await this.prismaService.track.findMany();
   }
 
-  getTrackById(id: string): TrackInterface {
+  async getTrackById(id: string): Promise<TrackInterface> {
     validateUUID(id);
+    const currentTrack = await this.prismaService.track.findUnique({
+      where: {
+        id: id,
+      },
+    });
 
-    const currentTrack = this.getTracks().find((track) => track.id === id);
     if (!currentTrack) throwError404('Track not found');
     return currentTrack;
   }
 
-  createTrack(trackDto: TrackDTOInterface): TrackInterface {
-    const track = new Track(trackDto);
+  async createTrack(trackDto: TrackDTOInterface): Promise<TrackInterface> {
+    const track = await this.prismaService.track.create({
+      data: {
+        ...trackDto,
+      },
+    });
 
-    this.dbService.addTrack(track);
     return track;
   }
 
-  updateTrack(
+  async updateTrack(
     updateTrackDto: UpdateTrackInterface,
     id: string,
-  ): TrackInterface {
-    const track = this.getTrackById(id);
-    for (let key in updateTrackDto) {
-      track[key] = updateTrackDto[key];
-    }
+  ): Promise<TrackInterface> {
+    const track = await this.getTrackById(id);
 
-    return track;
+    if (track) {
+      const updateTrack = await this.prismaService.track.update({
+        where: {
+          id: id,
+        },
+        data: {
+          ...updateTrackDto,
+        },
+      });
+
+      return updateTrack;
+    }
   }
 
-  removeTrack(id: string): void {
-    const currentTrack = this.getTrackById(id);
-    const index = this.dbService
-      .getTracks()
-      .findIndex((track) => track.id === currentTrack.id);
-
-    this.dbService.removeTrack(index, id);
+  async removeTrack(id: string): Promise<void> {
+    validateUUID(id);
+    const currentTrack = await this.getTrackById(id);
+    if (currentTrack) {
+      await this.prismaService.track.delete({
+        where: {
+          id: id,
+        },
+      });
+    }
   }
 }

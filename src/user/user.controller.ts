@@ -11,7 +11,6 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import { UserService } from './user.service';
-import { UserInterface, UserResponseInterface } from './user.interface';
 
 import { CreateUserDTO, UpdateUserPasswordDTO } from './user.dto';
 
@@ -21,36 +20,36 @@ export class UserController {
 
   @Get()
   @HttpCode(200)
-  getUsers(): UserResponseInterface[] {
-    return this.userService.getUsers();
+  async getUsers() {
+    return await this.userService.getUsers();
   }
 
   @Get(':id')
   @HttpCode(200)
-  getUser(@Param('id') id: string): UserResponseInterface {
-    return this.userService.getUserById(id);
+  async getUser(@Param('id') id: string) {
+    return await this.userService.getUserById(id);
   }
 
   @Post()
   @HttpCode(201)
   @UsePipes(ValidationPipe)
-  createUser(@Body() user: CreateUserDTO): UserResponseInterface {
-    return this.userService.createUser(user);
+  async createUser(@Body() user: CreateUserDTO) {
+    return await this.userService.createUser(user);
   }
 
   @Put(':id')
   @HttpCode(200)
   @UsePipes(ValidationPipe)
-  updateUserPassword(
+  async updateUserPassword(
     @Param('id') id: string,
     @Body() passwordDto: UpdateUserPasswordDTO,
   ) {
-    return this.userService.updateUserPassword(passwordDto, id);
+    return await this.userService.updateUserPassword(passwordDto, id);
   }
 
   @Delete(':id')
   @HttpCode(204)
-  removeUser(@Param('id') id: string) {
-    return this.userService.removeUser(id);
+  async removeUser(@Param('id') id: string) {
+    return await this.userService.removeUser(id);
   }
 }

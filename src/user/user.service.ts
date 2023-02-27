@@ -1,19 +1,19 @@
 import { Injectable } from '@nestjs/common';
-import { User } from './user.entity';
 import {
   CreateUserDTOInterface,
   UpdatePasswordDtoInterface,
-  UserResponseInterface,
 } from './user.interface';
 import { throwError403, throwError404, validateUUID } from '../helpers';
-import { DbService } from 'src/db/db.service';
+
+import { PrismaService } from 'src/prisma.service';
 
 @Injectable()
 export class UserService {
-  constructor(private dbService: DbService) {}
+  constructor(private prismaService: PrismaService) {}
 
-  getUsers(): UserResponseInterface[] {
-    const users = this.dbService.getUsers().map((user) => {
+  async getUsers() {
+    const users = await this.prismaService.user.findMany();
+    users.map((user) => {
       const { password, ...userRes } = user;
       return userRes;
     });
@@ -21,48 +21,79 @@ export class UserService {
     return users;
   }
 
-  getUserById(id: string): UserResponseInterface {
+  async getUserById(id: string) {
     validateUUID(id);
-    const user = this.getUsers().find((user) => user.id === id);
+    const user = await this.prismaService.user.findUnique({
+      where: {
+        id: id,
+      },
+    });
     if (!user) throwError404('User not found');
 
     return user;
   }
 
-  createUser(userDTO: CreateUserDTOInterface): UserResponseInterface {
-    const user = new User(userDTO);
-    this.dbService.addUser(user);
-    const { password, ...responseUser } = user;
-    return responseUser;
+  async createUser(userDTO: CreateUserDTOInterface) {
+    const createUser = await this.prismaService.user.create({
+      data: {
+        login: userDTO.login,
+        password: userDTO.password,
+        version: 1,
+      },
+    });
+
+    const { password, ...responseUser } = createUser;
+    const responseUserConverted = {
+      ...responseUser,
+      createdAt: +responseUser.createdAt,
+      updatedAt: +responseUser.updatedAt,
+    };
+
+    return responseUserConverted;
   }
 
-  updateUserPassword(
+  async updateUserPassword(
     passwordDto: UpdatePasswordDtoInterface,
     id: string,
-  ): UserResponseInterface {
+  ) {
     validateUUID(id);
-    const currentUser = this.dbService
-      .getUsers()
-      .find((user) => user.id === id);
-
-    if (!currentUser) throwError404('User not found');
-
+    const currentUser = await this.getUserById(id);
     if (currentUser.password === passwordDto.oldPassword) {
-      currentUser.password = passwordDto.newPassword;
-      currentUser.updatedAt = new Date().getTime();
-      currentUser.version += 1;
-      const { password, ...responseUser } = currentUser;
-      return responseUser;
+      const updateUsers = await this.prismaService.user.update({
+        where: {
+          id: id,
+        },
+        data: {
+          password: passwordDto.newPassword,
+          version: {
+            increment: 1,
+          },
+          updatedAt: new Date(),
+        },
+      });
+
+      const { password, ...responseUser } = updateUsers;
+      const responseUserConverted = {
+        ...responseUser,
+        createdAt: +responseUser.createdAt,
+        updatedAt: +responseUser.updatedAt,
+      };
+
+      return responseUserConverted;
     }
 
     throwError403('Old password is wrong');
   }
 
-  removeUser(id: string): void {
-    const currentUser = this.getUserById(id);
-    const index = this.getUsers().findIndex(
-      (user) => user.id === currentUser.id,
-    );
-    this.dbService.removeUser(index);
+  async removeUser(id: string) {
+    validateUUID(id);
+    const currentUser = await this.getUserById(id);
+    if (currentUser) {
+      await this.prismaService.user.delete({
+        where: {
+          id: id,
+        },
+      });
+    }
   }
 }
