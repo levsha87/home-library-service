@@ -6,19 +6,24 @@ import { ArtistModule } from './artist/artist.module';
 import { AlbumModule } from './album/album.module';
 import { FavsModule } from './favs/favs.module';
 import { AuthModule } from './auth/auth.module';
-import { AppController } from './app.controller';
+import { TokenModule } from './token/token.module';
+import configurations from './configurations';
 
 @Module({
   imports: [
-    ConfigModule.forRoot(),
+    ConfigModule.forRoot({
+      isGlobal: true,
+      load: [configurations],
+    }),
     UserModule,
     TrackModule,
     ArtistModule,
     AlbumModule,
     FavsModule,
     AuthModule,
+    TokenModule,
   ],
-  controllers: [AppController],
+  controllers: [],
   providers: [],
 })
 export class AppModule {}

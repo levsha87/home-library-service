@@ -1,29 +1,35 @@
 import { Injectable } from '@nestjs/common';
 import { UserService } from '../user/user.service';
-import { JwtService } from '@nestjs/jwt';
+import { throwError404 } from 'src/helpers';
+import { TokenService } from 'src/token/token.service';
+import { AuthUserDTO } from './auth.dto';
 
 @Injectable()
 export class AuthService {
   constructor(
-    private userService: UserService,
-    private jwtService: JwtService,
+    private readonly userService: UserService,
+    private readonly tokenService: TokenService,
   ) {}
 
-  async validateUser(username: string, password: string): Promise<any> {
-    const user = await this.userService.getUserByName(username);
-    console.log('auth', user);
-    if (user && user.password === password) {
-      const { password, ...result } = user;
-      return result;
-    }
-    return null;
+  async registerUser(userDTO: AuthUserDTO) {
+    const existUser = await this.userService.getUserByLogin(userDTO.login);
+
+    if (existUser) throwError404('User exist');
+
+    return this.userService.createUser(userDTO);
   }
 
-  async login(user: any) {
-    console.log('login', user);
-    const payload = { login: user.login, id: user.id };
-    return {
-      access_token: this.jwtService.sign(payload),
-    };
+  async loginUser(userDto: AuthUserDTO) {
+    const existUser = await this.userService.getUserByLogin(userDto.login);
+
+    if (!existUser) throwError404('User not founded');
+    const validatePassword = await this.userService.validatePassword(
+      userDto.password,
+      existUser.password,
+    );
+
+    if (!validatePassword) throwError404('Wrong data');
+
+    return this.tokenService.generateJwtToken(existUser);
   }
 }

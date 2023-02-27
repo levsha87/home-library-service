@@ -34,13 +34,12 @@ export class UserService {
     return user;
   }
 
-  async getUserByName(username: string) {
+  async getUserByLogin(login: string) {
     const user = await this.prismaService.user.findFirst({
       where: {
-        login: username,
+        login,
       },
     });
-    if (!user) throwError404('User not found');
 
     return user;
   }
@@ -118,7 +117,7 @@ export class UserService {
   }
 
   async hashPassword(password: string): Promise<string> {
-    return bcript.hash(password, 10);
+    return bcript.hash(password, +process.env.CRYPT_SALT);
   }
 
   async validatePassword(

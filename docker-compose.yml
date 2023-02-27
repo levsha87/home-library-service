@@ -1,21 +1,21 @@
 version: '3.8'
 services:
-  nest-api:
-    container_name: nest-api-container
-    build: 
-      context: .
-      dockerfile: Dockerfile
-    ports:
-      - ${PORT}:${PORT}
-    networks:
-      postgres_net:
-        ipv4_address: 192.168.0.4
-    volumes:
-      - ./:/app
-    env_file:
-      - .env
-    depends_on:
-      - postgres
+  # nest-api:
+  #   container_name: nest-api-container
+  #   build: 
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   ports:
+  #     - ${PORT}:${PORT}
+  #   networks:
+  #     postgres_net:
+  #       ipv4_address: 192.168.0.4
+  #   volumes:
+  #     - ./:/app
+  #   env_file:
+  #     - .env
+  #   depends_on:
+  #     - postgres
 
   postgres:
     image: postgres
