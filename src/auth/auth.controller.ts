@@ -27,4 +27,3 @@ export class AuthController {
     return await this.authService.registerUser(userDto);
   }
 }
-// @UseGuards(JwtAuthGuard)
