@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import * as bcript from 'bcrypt';
 import {
   CreateUserDTOInterface,
   UpdatePasswordDtoInterface,
@@ -33,7 +34,18 @@ export class UserService {
     return user;
   }
 
+  async getUserByLogin(login: string) {
+    const user = await this.prismaService.user.findFirst({
+      where: {
+        login,
+      },
+    });
+
+    return user;
+  }
+
   async createUser(userDTO: CreateUserDTOInterface) {
+    userDTO.password = await this.hashPassword(userDTO.password);
     const createUser = await this.prismaService.user.create({
       data: {
         login: userDTO.login,
@@ -58,7 +70,14 @@ export class UserService {
   ) {
     validateUUID(id);
     const currentUser = await this.getUserById(id);
-    if (currentUser.password === passwordDto.oldPassword) {
+
+    if (
+      await this.validatePassword(passwordDto.oldPassword, currentUser.password)
+    ) {
+      passwordDto.newPassword = await this.hashPassword(
+        passwordDto.newPassword,
+      );
+
       const updateUsers = await this.prismaService.user.update({
         where: {
           id: id,
@@ -95,5 +114,16 @@ export class UserService {
         },
       });
     }
+  }
+
+  async hashPassword(password: string): Promise<string> {
+    return bcript.hash(password, +process.env.CRYPT_SALT);
+  }
+
+  async validatePassword(
+    password: string,
+    hashedPassword: string,
+  ): Promise<boolean> {
+    return await bcript.compare(password, hashedPassword);
   }
 }
